@@ -5,27 +5,29 @@ import ReactTable from "react-table";
 import Button from "../layout/Button";
 import { Link } from "react-router-dom";
 import "react-table/react-table.css";
+import { compose } from "redux";
+import { connect } from "react-redux";
+import { firestoreConnect } from "react-redux-firebase";
+import Spinner from "../layout/Spinner";
+import PropTypes from "prop-types";
 
 class Clients extends Component {
+  state = {
+    totalOwed: null
+  };
+
+  static getDerivedStateFromProps(props, state) {
+    const { clients = [] } = props;
+    // add Balance
+    const total = clients.reduce((total, client) => {
+      return total + parseFloat(client.balance.toString());
+    }, 0);
+
+    return { totalOwed: total };
+  }
   render(props) {
-    const clients = [
-      {
-        id: "234234234",
-        firstName: "Kevin",
-        lastName: "Johnson",
-        email: "kevin@gmail.com",
-        phone: "555-555-555",
-        balance: "30"
-      },
-      {
-        id: "234657234",
-        firstName: "Du Hund",
-        lastName: "Johnson",
-        email: "kevin@gmail.com",
-        phone: "555-555-555",
-        balance: "70"
-      }
-    ];
+    const { clients } = this.props;
+    const { totalOwed } = this.state;
     const columns = [
       {
         Header: "Name",
@@ -58,38 +60,55 @@ class Clients extends Component {
         )
       }
     ];
-
-    return (
-      <div>
-        <Wrapper>
-          <Heading>
-            <h1>
-              <FontIcon type="users" /> Clients
-            </h1>
-          </Heading>
-          <Link to="/Client/add">
-            <Button>
-              <FontIcon type="plus" />
-              <span>New</span>
-            </Button>
-          </Link>
-        </Wrapper>
-        <Table
-          defaultPageSize={10}
-          className="-striped -highlight"
-          data={clients}
-          columns={columns}
-        />
-      </div>
-    );
+    if (clients) {
+      return (
+        <div>
+          <Wrapper>
+            <Heading>
+              <h1>
+                <FontIcon type="users" /> Clients
+              </h1>
+            </Heading>
+            <h5>
+              Total Owed <span>${parseFloat(totalOwed).toFixed(2)}</span>
+            </h5>
+            <Link to="/client/add">
+              <Button>
+                <FontIcon type="plus" />
+                <span>New</span>
+              </Button>
+            </Link>
+          </Wrapper>
+          <Table
+            defaultPageSize={10}
+            className="-striped -highlight"
+            data={clients}
+            columns={columns}
+          />
+        </div>
+      );
+    } else {
+      return <Spinner />;
+    }
   }
 }
 
-export default Clients;
+Clients.propTypes = {
+  firestore: PropTypes.object.isRequired,
+  clients: PropTypes.array
+};
+
+export default compose(
+  firestoreConnect([{ collection: "user" }]),
+  connect((state, props) => ({
+    clients: state.firestore.ordered.user
+  }))
+)(Clients);
 
 export const Wrapper = styled.div`
   display: flex;
   justify-content: space-between;
+  align-items: center;
 `;
 
 export const Heading = styled.div`
@@ -100,8 +119,8 @@ export const Heading = styled.div`
 export const DetailButton = styled(Button)`
   padding: 5px 10px;
   margin: 0;
-  border-radius: 5px;
-  background-color: rgb(27, 152, 224, 0.7);
+  border-radius: 1px;
+  background-color: rgb(27, 152, 224, 0.9);
   width: 100%;
   text-align: center;
   margin: 0 auto;
