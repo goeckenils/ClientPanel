@@ -1,11 +1,46 @@
 import React, { Component } from "react";
-import styled from "styled-components";
+import { compose } from "redux";
+import { withRouter } from "react-router";
+import { connect } from "react-redux";
+import { firebaseConnect } from "react-redux-firebase";
 import { Link } from "react-router-dom";
-
-import Button from "./Button";
+import Button from "../layout/Button";
+import { FontIcon } from "../base/FontIcon";
+import PropTypes from "prop-types";
+import styled from "styled-components/macro";
 
 class AppNavbar extends Component {
+  state = {
+    isAuthenticated: false
+  };
+
+  static getDerivedStateFromProps(props, state) {
+    const { auth } = props;
+
+    if (auth.uid) {
+      return { isAuthenticated: true };
+    } else {
+      return { isAuthenticated: false };
+    }
+  }
+
+  onLogoutClick = e => {
+    e.preventDefault();
+
+    const { firebase, history } = this.props;
+
+    firebase
+      .logout()
+      .then(() => history.push("/login"))
+      .catch(err => {
+        console.log(err);
+      });
+  };
+
   render() {
+    const { isAuthenticated } = this.state;
+    const { auth } = this.props;
+
     return (
       <Nav>
         <Container>
@@ -13,14 +48,33 @@ class AppNavbar extends Component {
             <Branding>ARPAOS</Branding>
           </Link>
           <Wrapper>
-            <List>
-              <ListItem>
-                <Button>Login</Button>
-              </ListItem>
-              <ListItem>
-                <Button>Register</Button>
-              </ListItem>
-            </List>
+            {isAuthenticated ? null : (
+              <List>
+                <ListItem>
+                  <Link to="/login">
+                    <Button>Login</Button>
+                  </Link>
+                </ListItem>
+                <ListItem>
+                  <Button>Register</Button>
+                </ListItem>
+              </List>
+            )}
+            {isAuthenticated ? (
+              <List>
+                <ListItem>
+                  <h4>
+                    <FontIcon type="user" />
+                    {auth.email}
+                  </h4>
+                </ListItem>
+                <ListItem>
+                  <Logout onClick={this.onLogoutClick}>
+                    <FontIcon type="power-off" /> Logout
+                  </Logout>
+                </ListItem>
+              </List>
+            ) : null}
           </Wrapper>
         </Container>
       </Nav>
@@ -28,7 +82,18 @@ class AppNavbar extends Component {
   }
 }
 
-export default AppNavbar;
+AppNavbar.propTypes = {
+  firebase: PropTypes.object.isRequired,
+  auth: PropTypes.object.isRequired
+};
+
+export default compose(
+  firebaseConnect(),
+  withRouter,
+  connect((state, props) => ({
+    auth: state.firebase.auth
+  }))
+)(AppNavbar);
 
 export const Nav = styled.div`
   width: 100%;
@@ -61,4 +126,12 @@ export const List = styled.ol`
 
 export const ListItem = styled.li`
   margin: 0px 10px;
+`;
+
+export const Logout = styled(Button)`
+  background-color: #b24c63;
+
+  &:hover {
+    background-color: rgba(178, 76, 99, 0.8);
+  }
 `;

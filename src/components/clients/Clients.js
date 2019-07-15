@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import styled from "styled-components";
+import styled from "styled-components/macro";
 import { FontIcon } from "../base/FontIcon";
 import ReactTable from "react-table";
 import Button from "../layout/Button";
@@ -8,6 +8,7 @@ import "react-table/react-table.css";
 import { compose } from "redux";
 import { connect } from "react-redux";
 import { firestoreConnect } from "react-redux-firebase";
+import AbsoluteWrapper from "../base/AbsoluteWrapper";
 import Spinner from "../layout/Spinner";
 import PropTypes from "prop-types";
 
@@ -28,6 +29,7 @@ class Clients extends Component {
   render(props) {
     const { clients } = this.props;
     const { totalOwed } = this.state;
+
     const columns = [
       {
         Header: "Name",
@@ -50,42 +52,50 @@ class Clients extends Component {
       {
         Header: "Details",
         accessor: "id",
-        Cell: e => (
-          <Link to={`/clients/${clients.id}`}>
-            <DetailButton>
-              <FontIcon type="arrow-circle-right" />
-              Show Details
-            </DetailButton>
-          </Link>
-        )
+        Cell: e => {
+          console.log(e);
+          return (
+            <Link to={`/client/${e.value}`}>
+              <DetailButton>
+                <FontIcon type="arrow-circle-right" />
+                Show Details
+              </DetailButton>
+            </Link>
+          );
+        }
       }
     ];
     if (clients) {
       return (
-        <div>
-          <Wrapper>
-            <Heading>
-              <h1>
-                <FontIcon type="users" /> Clients
-              </h1>
-            </Heading>
-            <h5>
-              Total Owed <span>${parseFloat(totalOwed).toFixed(2)}</span>
-            </h5>
-            <Link to="/client/add">
-              <Button>
-                <FontIcon type="plus" />
-                <span>New</span>
-              </Button>
-            </Link>
-          </Wrapper>
-          <Table
-            defaultPageSize={10}
-            className="-striped -highlight"
-            data={clients}
-            columns={columns}
-          />
-        </div>
+        <AbsoluteWrapper>
+          <div>
+            <Wrapper>
+              <Heading>
+                <h1>
+                  <FontIcon type="users" /> Clients
+                </h1>
+              </Heading>
+              <h2>
+                Total Owed{" "}
+                <span style={{ color: "#1b98e0" }}>
+                  ${parseFloat(totalOwed).toFixed(2)}
+                </span>
+              </h2>
+              <Link to="/client/add">
+                <Button>
+                  <FontIcon type="plus" />
+                  <span>New</span>
+                </Button>
+              </Link>
+            </Wrapper>
+            <Table
+              defaultPageSize={10}
+              className="-striped -highlight"
+              data={clients}
+              columns={columns}
+            />
+          </div>
+        </AbsoluteWrapper>
       );
     } else {
       return <Spinner />;

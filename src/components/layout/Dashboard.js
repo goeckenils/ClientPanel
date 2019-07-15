@@ -1,6 +1,6 @@
 import React from "react";
 import Clients from "../clients/Clients";
-import styled from "styled-components";
+import styled from "styled-components/macro";
 
 function Dashboard() {
   return (
